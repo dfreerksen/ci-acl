@@ -144,7 +144,7 @@ class Acl {
 			// Only run it if we are inside the controller/method
 			if ($uri[0] === '*' OR $uri[0] === $this->ci->uri->rsegment(1))
 			{
-				if ($uri[1] === '*' OR $uri[0] === $this->ci->uri->rsegment(2))
+				if ($uri[1] === '*' OR $uri[1] === $this->ci->uri->rsegment(2))
 				{
 					// Default allow roles array
 					if ( ! isset($restriction['allow_roles']))
