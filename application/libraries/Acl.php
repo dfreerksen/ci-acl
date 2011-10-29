@@ -1,14 +1,23 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
-
+/**
+ * CodeIgniter ACL Class
+ *
+ * This class enables you to apply permissions to controllers, controller and models, as well as more fine tuned
+ * permissions at code level.
+ *
+ * @package     CodeIgniter
+ * @subpackage  Libraries
+ * @category    Libraries
+ * @author      David Freerksen
+ * @link        https://github.com/dfreerksen/ci-acl
+ */
 class Acl {
 
-	protected $ci;
+	protected $CI;
 
 	protected $user = 0;
 	protected $role = 0;
 	protected $permissions = array();
-
-	protected $_acl_restricted = array();
 
 	protected $_acl_table_users = 'users';
 	protected $_acl_users_fields = array(
@@ -30,14 +39,33 @@ class Acl {
 	protected $_acl_user_session_key = 'user_id';
 
 	/**
+	 * @TODO: Add IP based access to acl_restricted
+	 */
+	protected $_acl_restricted = array();
+
+	/**
+	 * @TODO: Reserved for when caching is implemented
+	 */
+	protected $_acl_cache = TRUE;
+	protected $_acl_cache_time = 86400;
+	protected $_acl_cache_prefix = 'acl_';
+	protected $_acl_cache_adapter = 'file';
+	protected $_acl_cache_backup_adapter = 'dummy';
+
+	/**
 	 * Constructor
+	 * 
 	 * @param   array   $config
 	 */
 	public function __construct($config = array())
 	{
-		$this->ci = &get_instance();
+		$this->CI = &get_instance();
 
-		$this->ci->load->library('session');
+		// Load Session library
+		$this->CI->load->library('session');
+
+		// Load ACL model
+		$this->CI->load->model('acl_model');
 
 		if ( ! empty($config))
 		{
@@ -64,8 +92,8 @@ class Acl {
 				foreach ($val as $k => $v)
 				{
 					// In case they aren't defined, we need default values
-					$allow_roles = ( ! isset($v['allow_roles'])) ? array( ) : (array)$v['allow_roles'];
-					$allow_users = ( ! isset($v['allow_users'])) ? array( ) : (array)$v['allow_users'];
+					$allow_roles = ( ! isset($v['allow_roles'])) ? array() : (array)$v['allow_roles'];
+					$allow_users = ( ! isset($v['allow_users'])) ? array() : (array)$v['allow_users'];
 					$error_msg = ( ! isset($v['error_msg'])) ? 'You do not have access to this section.' : $v['error_msg'];
 
 					// Set the restrictions
@@ -78,9 +106,9 @@ class Acl {
 			}
 			else
 			{
-				if (isset($this->{'_' . $key}))
+				if (isset($this->{'_'.$key}))
 				{
-					$this->{'_' . $key} = $val;
+					$this->{'_'.$key} = $val;
 				}
 			}
 		}
@@ -97,7 +125,7 @@ class Acl {
 	 */
 	public function __get($name)
 	{
-		return isset($this->{'_' . $name}) ? $this->{'_' . $name} : NULL;
+		return isset($this->{'_'.$name}) ? $this->{'_'.$name} : NULL;
 	}
 
 	// --------------------------------------------------------------------
@@ -111,9 +139,9 @@ class Acl {
 	 */
 	public function __set($name, $value)
 	{
-		if (isset($this->{'_' . $name}))
+		if (isset($this->{'_'.$name}))
 		{
-			$this->{'_' . $name} = $value;
+			$this->{'_'.$name} = $value;
 		}
 	}
 
@@ -142,9 +170,9 @@ class Acl {
 			}
 
 			// Only run it if we are inside the controller/method
-			if ($uri[0] === '*' OR $uri[0] === $this->ci->uri->rsegment(1))
+			if ($uri[0] === '*' OR $uri[0] === $this->CI->uri->rsegment(1))
 			{
-				if ($uri[1] === '*' OR $uri[1] === $this->ci->uri->rsegment(2))
+				if ($uri[1] === '*' OR $uri[1] === $this->CI->uri->rsegment(2))
 				{
 					// Default allow roles array
 					if ( ! isset($restriction['allow_roles']))
@@ -181,8 +209,11 @@ class Acl {
 	 */
 	public function has_permission($key = '')
 	{
+		// User role
+		$role = $this->_user_role();
+
 		// See if we have permissions
-		$query = $this->_has_permission_query();
+		$query = $this->CI->acl_model->has_permission($role);
 
 		$p = $query->result_array();
 
@@ -199,26 +230,6 @@ class Acl {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Get permissions from database
-	 * 
-	 * @return  array
-	 */
-	private function _has_permission_query()
-	{
-		$role = $this->_user_role();
-
-		$this->ci->db->select("p.{$this->_acl_permissions_fields['key']} as k")
-			->from($this->_acl_table_permissions.' p')
-			->join($this->_acl_table_role_permissions.' rp', "rp.{$this->_acl_role_permissions_fields['permission_id']} = p.{$this->_acl_permissions_fields['id']}")
-			->where("rp.{$this->_acl_role_permissions_fields['role_id']}", $role);
-
-		return $this->ci->db->get();
-
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
 	 * Return the value of user id from the session. Returns 0 if not logged in
 	 *
 	 * @access  private
@@ -228,7 +239,8 @@ class Acl {
 	{
 		if ($this->user == NULL)
 		{
-			$user = $this->ci->session->userdata($this->_acl_user_session_key);
+			$user = $this->CI->session->userdata($this->_acl_user_session_key);
+
 			if ($user === FALSE)
 			{
 				$user = 0;
@@ -255,7 +267,10 @@ class Acl {
 			//Default role
 			$role = 0;
 
-			$query = $this->_user_role_query();
+			// Current user
+			$user = $this->_session_user();
+
+			$query = $this->CI->acl_model->user_role($user);
 
 			// Set the role
 			if ($query->num_rows() > 0)
@@ -271,20 +286,9 @@ class Acl {
 		return $this->role;
 	}
 
-	// --------------------------------------------------------------------
-
-	/**
-	 * Get current user by session info
-	 * 
-	 * @return  array
-	 */
-	private function _user_role_query()
-	{
-		$this->ci->db->select("u.{$this->_acl_users_fields['role_id']} as role_id")
-			->from($this->_acl_table_users.' u')
-			->where("u.{$this->_acl_users_fields['id']}", $this->_session_user());
-
-		return $this->ci->db->get();
-	}
-
 }
+
+// END Acl class
+
+/* End of file Acl.php */
+/* Location: ./application/libraries/Acl.php */

@@ -61,7 +61,9 @@ code {
 <p><br />Page rendered in {elapsed_time} seconds</p>
 
 <?php if ($this->acl->has_permission('something')) : ?>
-SOMETHING
+	You has access! :)
+<?php else : ?>
+	You do not have access :(
 <?php endif; ?>
 
 </body>
