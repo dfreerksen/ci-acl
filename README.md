@@ -1,8 +1,7 @@
 # Huh?
 ACL stands for access control list. It is a way of restricting users access to features of your site depending on their
-permissions. In this case, we are using a role-based access control (RBAC). To make it easier to add permissions for
-users when changes are made to your site, permissions are connected to the role rather the user. Each user is then
-assigned to a single role.
+permissions. To make it easier to add permissions for users when changes are made to your site, permissions are
+connected to the role rather the user. Each user is then assigned to a single role.
 
 If no access permission is required, there is no need to add a permission. If access does need to be restricted, add a
 new permission and assign the permission to one or more roles. Users in that role will now have access. Users not in
@@ -133,6 +132,11 @@ If a user has permissions, they will see the message _You has access! :)_ If the
 the message _You do not have access :(_
 
 This is the more preferred access restriction method as it gets down to the smaller details of the code.
+
+
+# Name
+So what's the name of this fancy thing? It's doesn't have a name. I've just been calling it ACL. If you have a fancy
+name to call it, let me know what it is.
 
 
 # TODO
