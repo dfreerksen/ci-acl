@@ -56,7 +56,6 @@ class Acl_model extends CI_Model {
 	}
 
 }
-
 // END Acl_model class
 
 /* End of file acl_model.php */

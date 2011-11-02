@@ -54,7 +54,7 @@ class Acl {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param   array   $config
 	 */
 	public function __construct($config = array())
@@ -287,7 +287,6 @@ class Acl {
 	}
 
 }
-
 // END Acl class
 
 /* End of file Acl.php */
