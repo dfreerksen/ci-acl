@@ -213,9 +213,7 @@ class Acl {
 		$role = $this->_user_role();
 
 		// See if we have permissions
-		$query = $this->CI->acl_model->has_permission($role);
-
-		$p = $query->result_array();
+		$p = $this->CI->acl_model->has_permission($role);
 
 		// Add to the list of permissions
 		foreach ($p as $row)
@@ -264,23 +262,10 @@ class Acl {
 	{
 		if ($this->role == NULL)
 		{
-			//Default role
-			$role = 0;
-
 			// Current user
 			$user = $this->_session_user();
 
-			$query = $this->CI->acl_model->user_role($user);
-
-			// Set the role
-			if ($query->num_rows() > 0)
-			{
-				$row = $query->row_array();
-				$role = $row['role_id'];
-			}
-
-			// Set the role
-			$this->role = $role;
+			$this->role = $this->CI->acl_model->user_role($user);
 		}
 
 		return $this->role;

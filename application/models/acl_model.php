@@ -36,7 +36,9 @@ class Acl_model extends CI_Model {
 			->join($this->acl->acl_table_role_permissions.' rp', "rp.{$this->acl->acl_role_permissions_fields['permission_id']} = p.{$this->acl->acl_permissions_fields['id']}")
 			->where("rp.{$this->acl->acl_role_permissions_fields['role_id']}", $role);
 
-		return $this->db->get();
+		$query = $this->db->get();
+
+		return $query->result_array();
 	}
 
 	// --------------------------------------------------------------------
@@ -52,7 +54,18 @@ class Acl_model extends CI_Model {
 			->from($this->acl->acl_table_users.' u')
 			->where("u.{$this->acl->acl_users_fields['id']}", $user);
 
-		return $this->db->get();
+		$query = $this->db->get();
+
+		// User was found
+		if ($query->num_rows() > 0)
+		{
+			$row = $query->row_array();
+
+			return $row['role_id'];
+		}
+
+		// No role
+		return 0;
 	}
 
 }
