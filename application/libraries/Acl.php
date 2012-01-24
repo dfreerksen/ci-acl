@@ -1,4 +1,4 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * CodeIgniter ACL Class
  *
@@ -19,38 +19,26 @@ class Acl {
 	protected $role = 0;
 	protected $permissions = array();
 
-	protected $_acl_table_users = 'users';
-	protected $_acl_users_fields = array(
-		'id' => 'id',
-		'role_id' => 'role_id'
+	protected $_config = array(
+		'acl_table_users' => 'users',
+		'acl_users_fields' => array(
+			'id' => 'id',
+			'role_id' => 'role_id'
+		),
+		'acl_table_permissions' => 'permissions',
+		'acl_permissions_fields' => array(
+				'id' => 'id',
+				'key' => 'key'
+		),
+		'acl_table_role_permissions' => 'role_permissions',
+		'acl_role_permissions_fields' => array(
+			'id' => 'id',
+			'role_id' => 'role_id',
+			'permission_id' => 'permission_id'
+		),
+		'acl_user_session_key' => 'user_id',
+		'acl_restricted' => array() // @TODO: Add IP based access to acl_restricted
 	);
-	protected $_acl_table_permissions = 'permissions';
-	protected $_acl_permissions_fields = array(
-		'id' => 'id',
-		'key' => 'key'
-	);
-	protected $_acl_table_role_permissions = 'role_permissions';
-	protected $_acl_role_permissions_fields = array(
-		'id' => 'id',
-		'role_id' => 'role_id',
-		'permission_id' => 'permission_id'
-	);
-
-	protected $_acl_user_session_key = 'user_id';
-
-	/**
-	 * @TODO: Add IP based access to acl_restricted
-	 */
-	protected $_acl_restricted = array();
-
-	/**
-	 * @TODO: Reserved for when caching is implemented
-	 */
-	protected $_acl_cache = TRUE;
-	protected $_acl_cache_time = 86400;
-	protected $_acl_cache_prefix = 'acl_';
-	protected $_acl_cache_adapter = 'file';
-	protected $_acl_cache_backup_adapter = 'dummy';
 
 	/**
 	 * Constructor
@@ -92,23 +80,24 @@ class Acl {
 				foreach ($val as $k => $v)
 				{
 					// In case they aren't defined, we need default values
-					$allow_roles = ( ! isset($v['allow_roles'])) ? array() : (array)$v['allow_roles'];
-					$allow_users = ( ! isset($v['allow_users'])) ? array() : (array)$v['allow_users'];
-					$error_msg = ( ! isset($v['error_msg'])) ? 'You do not have access to this section.' : $v['error_msg'];
+					$allow_roles = ( ! array_key_exists('allow_roles', $v)) ? array() : (array)$v['allow_roles'];
+					$allow_users = ( ! array_key_exists('allow_users', $v)) ? array() : (array)$v['allow_users'];
+					$error_msg = ( ! array_key_exists('error_msg', $v)) ? 'You do not have access to this section.' : $v['error_msg'];
 
 					// Set the restrictions
-					$this->{'_' . $key}[$k] = array(
+					$this->_config[$key][$k] = array(
 						'allow_roles' => $allow_roles,
 						'allow_users' => $allow_users,
 						'error_msg' => $error_msg
 					);
 				}
 			}
+
 			else
 			{
-				if (isset($this->{'_'.$key}))
+				if (array_key_exists($key, $this->_config))
 				{
-					$this->{'_'.$key} = $val;
+					$this->_config[$key] = $val;
 				}
 			}
 		}
@@ -119,13 +108,12 @@ class Acl {
 	/**
 	 * get magic method
 	 *
-	 * @access  public
-	 * @param   string
+	 * @param   $key
 	 * @return  mixed
 	 */
-	public function __get($name)
+	public function __get($key)
 	{
-		return isset($this->{'_'.$name}) ? $this->{'_'.$name} : NULL;
+		return array_key_exists($key, $this->_config) ? $this->_config[$key] : NULL;
 	}
 
 	// --------------------------------------------------------------------
@@ -133,15 +121,15 @@ class Acl {
 	/**
 	 * set magic method
 	 *
-	 * @access  public
-	 * @param   string
-	 * @return  null
+	 * @param   $key
+	 * @param   $value
+	 * @return  void
 	 */
-	public function __set($name, $value)
+	public function __set($key, $value)
 	{
-		if (isset($this->{'_'.$name}))
+		if (array_key_exists($key, $this->_config))
 		{
-			$this->{'_'.$name} = $value;
+			$this->_config[$key] = $value;
 		}
 	}
 
@@ -156,15 +144,16 @@ class Acl {
 	 */
 	public function has_access()
 	{
-		foreach ($this->_acl_restricted as $key => $restriction)
+		foreach ($this->_config['acl_restricted'] as $key => $restriction)
 		{
 			// Make sure it is in controller/method format
 			$uri = explode('/', $key);
-			if ( ! isset($uri[0]))
+			if ( ! array_key_exists(0, $uri))
 			{
 				$uri[0] = '*';
 			}
-			if ( ! isset($uri[1]))
+
+			if ( ! array_key_exists(1, $uri))
 			{
 				$uri[1] = '*';
 			}
@@ -175,19 +164,19 @@ class Acl {
 				if ($uri[1] === '*' OR $uri[1] === $this->CI->uri->rsegment(2))
 				{
 					// Default allow roles array
-					if ( ! isset($restriction['allow_roles']))
+					if ( ! array_key_exists('allow_roles', $restriction))
 					{
 						$restriction['allow_roles'] = array();
 					}
 
 					// Default deny roles array
-					if ( ! isset($restriction['deny_roles']))
+					if ( ! array_key_exists('deny_roles', $restriction))
 					{
 						$restriction['deny_roles'] = array();
 					}
 
 					// Deny for roles they are denied access as well as roles that are not in the list of allowed roles
-					if ( ! in_array($this->_user_role(), $restriction['allow_roles']) OR  in_array($this->_user_role(), $restriction['deny_roles']))
+					if ( ! in_array($this->_user_role(), $restriction['allow_roles']) OR in_array($this->_user_role(), $restriction['deny_roles']))
 					{
 						return FALSE;
 					}
@@ -213,10 +202,10 @@ class Acl {
 		$role = $this->_user_role();
 
 		// See if we have permissions
-		$p = $this->CI->acl_model->has_permission($role);
+		$query = $this->CI->acl_model->has_permission($role);
 
 		// Add to the list of permissions
-		foreach ($p as $row)
+		foreach ($query as $row)
 		{
 			$this->permissions[] = strtolower($row['k']);
 		}
@@ -237,7 +226,7 @@ class Acl {
 	{
 		if ($this->user == NULL)
 		{
-			$user = $this->CI->session->userdata($this->_acl_user_session_key);
+			$user = $this->CI->session->userdata($this->_config['acl_user_session_key']);
 
 			if ($user === FALSE)
 			{
@@ -262,10 +251,23 @@ class Acl {
 	{
 		if ($this->role == NULL)
 		{
+			//Default role
+			$role = 0;
+
 			// Current user
 			$user = $this->_session_user();
 
-			$this->role = $this->CI->acl_model->user_role($user);
+			$query = $this->CI->acl_model->user_role($user);
+
+			// Set the role
+			if ($query->num_rows() > 0)
+			{
+				$row = $query->row_array();
+				$role = $row['role_id'];
+			}
+
+			// Set the role
+			$this->role = $role;
 		}
 
 		return $this->role;

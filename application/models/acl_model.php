@@ -1,4 +1,4 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * CodeIgniter ACL Class
  *
@@ -12,16 +12,6 @@
  * @link        https://github.com/dfreerksen/ci-acl
  */
 class Acl_model extends CI_Model {
-
-	/**
-	 * Constructor
-	 */
-	function __construct()
-	{
-		parent::__construct();
-	}
-
-	// --------------------------------------------------------------------
 
 	/**
 	 * Get permissions from database
