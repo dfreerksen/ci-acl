@@ -21,12 +21,11 @@ class Acl_model extends CI_Model {
 	 */
 	public function has_permission($role = 0)
 	{
-		$this->db->select("p.{$this->acl->acl_permissions_fields['key']} as k")
+		$query = $this->db->select("p.{$this->acl->acl_permissions_fields['key']} as k")
 			->from($this->acl->acl_table_permissions.' p')
 			->join($this->acl->acl_table_role_permissions.' rp', "rp.{$this->acl->acl_role_permissions_fields['permission_id']} = p.{$this->acl->acl_permissions_fields['id']}")
-			->where("rp.{$this->acl->acl_role_permissions_fields['role_id']}", $role);
-
-		$query = $this->db->get();
+			->where("rp.{$this->acl->acl_role_permissions_fields['role_id']}", $role)
+			->get();
 
 		return $query->result_array();
 	}
@@ -40,11 +39,10 @@ class Acl_model extends CI_Model {
 	 */
 	public function user_role($user = 0)
 	{
-		$this->db->select("u.{$this->acl->acl_users_fields['role_id']} as role_id")
+		$query = $this->db->select("u.{$this->acl->acl_users_fields['role_id']} as role_id")
 			->from($this->acl->acl_table_users.' u')
-			->where("u.{$this->acl->acl_users_fields['id']}", $user);
-
-		$query = $this->db->get();
+			->where("u.{$this->acl->acl_users_fields['id']}", $user)
+			->get();
 
 		// User was found
 		if ($query->num_rows() > 0)
