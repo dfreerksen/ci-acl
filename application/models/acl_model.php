@@ -19,15 +19,16 @@ class Acl_model extends CI_Model {
 	 * @param   int $role
 	 * @return  array
 	 */
-	public function has_permission($role = 0)
+	public function has_permission($key = '')
 	{
-		$query = $this->db->select("p.{$this->acl->acl_permissions_fields['key']} as k")
-			->from($this->acl->acl_table_permissions.' p')
-			->join($this->acl->acl_table_role_permissions.' rp', "rp.{$this->acl->acl_role_permissions_fields['permission_id']} = p.{$this->acl->acl_permissions_fields['id']}")
-			->where("rp.{$this->acl->acl_role_permissions_fields['role_id']}", $role)
-			->get();
+		// User role
+		$role = $this->acl->role();
 
-		return $query->result_array();
+		// Permissions
+		$permissions = $this->permissions($role);
+
+		// Check if the key is in the list of permissions
+		return in_array(strtolower($key), $permissions);
 	}
 
 	// --------------------------------------------------------------------
@@ -54,6 +55,33 @@ class Acl_model extends CI_Model {
 
 		// No role
 		return 0;
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Get permissions from database
+	 *
+	 * @param   int $role
+	 * @return  array
+	 */
+	public function permissions($role = 0)
+	{
+		$query = $this->db->select("p.{$this->acl->acl_permissions_fields['key']} as k")
+			->from($this->acl->acl_table_permissions.' p')
+			->join($this->acl->acl_table_role_permissions.' rp', "rp.{$this->acl->acl_role_permissions_fields['permission_id']} = p.{$this->acl->acl_permissions_fields['id']}")
+			->where("rp.{$this->acl->acl_role_permissions_fields['role_id']}", $role)
+			->get();
+
+		$permissions = array();
+
+		// Add to the list of permissions
+		foreach ($query->result_array() as $row)
+		{
+			$permissions[] = strtolower($row['k']);
+		}
+
+		return $permissions;
 	}
 
 }

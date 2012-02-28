@@ -198,20 +198,7 @@ class Acl {
 	 */
 	public function has_permission($key = '')
 	{
-		// User role
-		$role = $this->_user_role();
-
-		// See if we have permissions
-		$query = $this->CI->acl_model->has_permission($role);
-
-		// Add to the list of permissions
-		foreach ($query as $row)
-		{
-			$this->permissions[] = strtolower($row['k']);
-		}
-
-		// Check if the key is in the list of permissions
-		return in_array(strtolower($key), $this->permissions);
+		return $this->CI->acl_model->has_permission($key);
 	}
 
 	// --------------------------------------------------------------------
@@ -237,6 +224,18 @@ class Acl {
 		}
 
 		return $this->user;
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Return user role
+	 *
+	 * @return  int
+	 */
+	public function role()
+	{
+		return $this->_user_role();
 	}
 
 	// --------------------------------------------------------------------
