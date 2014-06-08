@@ -1,3 +1,5 @@
+I've been told recent changes with Codeigniter have broken functionality in this library. I no longer work with Codeigniter so if the library isn't working, you will have to fix the issues yourself. 
+
 # Huh?
 ACL stands for access control list. It is a way of restricting users access to features of your site depending on their
 permissions. To make it easier to add permissions for users when changes are made to your site, permissions are
